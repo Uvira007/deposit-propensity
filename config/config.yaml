@@ -1,0 +1,68 @@
+# pipeline configuration
+# Bank market (UCI) - term deposit subscription prediction
+
+project: 
+  name: deposit_propensity
+  seed: 42
+
+paths:
+  data_dir: data/raw
+  output_dir: outputs
+  models_dir: outputs/models
+  plots_dir: outputs/plots
+  metrics_dir: outputs/metrics
+
+data:
+  # Local file name, if present, no download required. Otherwise auto-download from UCI.
+  filename: bank-full.csv
+  target_column: y
+  # Positive class value in raw data (subscription = yes)
+  positive_class: "yes"
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42
+
+preprocessing:
+  # Columns to drop
+  drop_columns: ["duration"]
+  #Categorical columns to be encoded
+  categorical_columns:
+    - job
+    - marital
+    - education
+    - default
+    - housing
+    - loan
+    - contact
+    - month
+    - poutcome
+
+sampling:
+  # SMOTE applied to training set only
+  use_smote: true
+  smote_k_neighbors: 5
+  random_state: 42
+  # class weight passed to models that support it
+  use_class_weight: true
+
+models:
+  random_state: 42
+  # Models and optional params (empty = use defaults)
+  decision_tree: {}
+  random_forest: {}
+  xgboost: {}
+  lightgbm: {}
+  catboost: {}
+
+evaluation:
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+    - roc_auc
+
+shap:
+  # SHAP on best model only (by ROC AUC)
+  sample_size: 1000
+  max_display_features: 15

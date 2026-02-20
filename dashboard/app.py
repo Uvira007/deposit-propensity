@@ -16,6 +16,7 @@ from sklearn.metrics import confusion_matrix, precision_recall_curve, average_pr
 from sklearn.calibration import calibration_curve
 import numpy as np
 
+RUN_PIPELINE_DISABLED = os.environ.get("RENDER") == "true" or os.environ.get("DISABLE_RUN_PIPELINE", "").lower() in ("1", "true", "yes")
 # Project root and config
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -499,10 +500,23 @@ def build_model_comparison_content():
     """Build Model comparison tab: metrics table, ROC curves, confusion matrices, Run pipeline button."""
     metrics_df, roc_curves, evaluation_data = load_model_artifacts()
 
-    run_button = html.Div([
-        html.Button("Run pipeline (refresh Model comparison)", id="run-pipeline-btn", n_clicks=0, className="btn btn-primary btn-lg"),
-        html.Div(id="run-pipeline-status", className="mt-2 text-muted small"),
-    ], className="mb-4")
+    if RUN_PIPELINE_DISABLED:
+        run_button = html.Div([
+            html.Button("Run pipeline (refresh Model comparison)",
+                         id="run-pipeline-btn", 
+                         n_clicks=0, 
+                         className="btn btn-primary btn-lg",
+                           disabled=True),
+            html.Div("Pipeline execution disabled on this host (request timeout and memory limits on free tier)."
+                     "Metrics and curves were generated at deploy time. Re-deploy the app to refresh", 
+                     className="mt-2 text-info small",
+                     id="run-pipeline-status"),
+        ], className="mb-4")
+    else:
+        run_button = html.Div([
+            html.Button("Run pipeline (refresh Model comparison)", id="run-pipeline-btn", n_clicks=0, className="btn btn-primary btn-lg"),
+            html.Div(id="run-pipeline-status", className="mt-2 text-muted small"),
+        ], className="mb-4")
 
     if metrics_df is None or roc_curves is None or evaluation_data is None:
         return html.Div([
@@ -690,6 +704,13 @@ def update_confusion_figure(selected_model):
 def run_pipeline_and_refresh(n_clicks, _current_children):
     if n_clicks is None or n_clicks == 0:
         return "", dash.no_update, dash.no_update
+    if RUN_PIPELINE_DISABLED:
+        return(
+            html.Span("Run pipeline is disabled on this host(free tier)",
+            className="text-warning"),
+            dash.no_update,
+            dash.no_update
+        )
     from src.run_pipeline import main
     status = html.Span("Running pipeline (this may take 1–2 minutes)...", className="text-info")
     try:

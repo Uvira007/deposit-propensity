@@ -3,6 +3,7 @@ Dash app: Data exploration and Model comparison with interactive Plotly visualiz
 Run from project root: python -m dashboard.app   or   python dashboard/app.py
 """
 import json
+import os
 import sys
 from pathlib import Path
 

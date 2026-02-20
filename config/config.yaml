@@ -11,6 +11,7 @@ paths:
   models_dir: outputs/models
   plots_dir: outputs/plots
   metrics_dir: outputs/metrics
+  dashboard_dir: outputs/dashboard
 
 data:
   # Local file name, if present, no download required. Otherwise auto-download from UCI.

@@ -20,7 +20,7 @@ def load_config(config_path: Path | None = None):
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     # Update relative paths to absolute paths
-    for key in ("data_dir", "model_dir", "output_dir", "plots_dir", "metrics_dir"):
+    for key in ("data_dir", "model_dir", "output_dir", "plots_dir", "metrics_dir", "dashboard_dir"):
         if key in config.get("paths", {}):
             config["paths"][key] = root / config["paths"][key]
     return config

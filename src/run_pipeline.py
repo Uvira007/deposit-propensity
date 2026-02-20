@@ -6,6 +6,8 @@ import json
 import pickle
 from pathlib import Path
 
+from sklearn.metrics import roc_curve
+
 from src.config import load_config, get_paths
 from src.data.load_data import load_bank_marketing
 from src.preprocessing.preprocess import preprocess_data
@@ -27,7 +29,7 @@ def main(config_path: Path | None = None):
     shap_cfg = config["shap"]
 
     # Output dirs
-    for key in ("models_dir", "plots_dir", "metrics_dir"):
+    for key in ("models_dir", "plots_dir", "metrics_dir", "dashboard_dir"):
         paths[key].mkdir(parents=True, exist_ok=True)
 
 
@@ -51,7 +53,7 @@ def main(config_path: Path | None = None):
     # class weight from original (imbalanced) train set for use in model
     scale_pos_weight = compute_class_weights(y_train)
 
-    # Resample training data
+    # Resample training data using SMOTE
     if samp_cfg["use_smote"]:
         X_train_resampled, y_train_resampled = apply_smote(X_train, y_train, 
                                                            k_neighbors=samp_cfg["smote_k_neighbors"],
@@ -101,6 +103,22 @@ def main(config_path: Path | None = None):
         pickle.dump(feature_names, f)
     with open(paths["models_dir"] / "best_model_name.txt", "w") as f:
         f.write(best_name)
+
+    # Save dashboard artifacts: ROC curves and predictions for all models
+    roc_curves = {}
+    evaluation_data = {"y_test": y_test.astype(int).tolist(), "models": {}}
+    for name, (model, y_pred, y_pred_proba) in models.items():
+        fpr, tpr, _ = roc_curve(y_test, y_pred_proba)
+        roc_curves[name] = {"fpr": fpr.tolist(), "tpr": tpr.tolist()}
+        evaluation_data["models"][name] = {
+            "y_pred": y_pred.astype(int).tolist(),
+            "y_pred_proba": y_pred_proba.tolist(),
+        }
+    with open(paths["dashboard_dir"] / "roc_curves.json", "w") as f:
+        json.dump(roc_curves, f, indent=2)
+    with open(paths["dashboard_dir"] / "evaluation_data.json", "w") as f:
+              json.dump(evaluation_data, f, indent=2)
+
 
     # SHAP on best model
     run_shap_analysis(

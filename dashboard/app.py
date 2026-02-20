@@ -704,7 +704,7 @@ def update_confusion_figure(selected_model):
 )
 def run_pipeline_and_refresh(n_clicks, _current_children):
     if n_clicks is None or n_clicks == 0:
-        return "", dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update
     if RUN_PIPELINE_DISABLED:
         return(
             html.Span("Run pipeline is disabled on this host(free tier)",
